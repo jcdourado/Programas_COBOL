@@ -1,3 +1,2 @@
-# COBOL_Cadastro_Funcionarios
-Programa feito em cobol para cadastrar funcionários em sistemas de arquivos
-Possui rotina de mensagem, gravação, exclusão, consulta, regravação e contas necessárias, conforme solicitado em aula.
+#Programas COBOL
+Programas meus feitos em sala de aula na linguagem COBOL com manipulação de arquivos (CRUD))
