@@ -1,0 +1,262 @@
+
+ CADCLIEN.COB                            Thu May 21 15:56:48 2015    Page   1
+ line number source line   Microsoft COBOL                       Version 2.20
+
+   1         IDENTIFICATION DIVISION.
+   2         PROGRAM-ID. CADCLIEN.
+   3        **************************************
+   4        * MANUTENCAO DO CADASTRO DE CLIENTES *
+   5        **************************************
+   6        *----------------------------------------------------------------
+   7         ENVIRONMENT DIVISION.
+   8         CONFIGURATION SECTION.
+   9         SPECIAL-NAMES.
+  10                           DECIMAL-POINT IS COMMA.
+  11         INPUT-OUTPUT SECTION.
+  12         FILE-CONTROL.
+  13         SELECT CLIENTE ASSIGN TO DISK
+  14                      ORGANIZATION IS INDEXED
+  15                      ACCESS MODE  IS DYNAMIC
+  16                      RECORD KEY   IS CODIGO
+  17                      FILE STATUS  IS ST-ERRO
+  18                      ALTERNATE RECORD KEY IS CHAVE2 = NOME CODIGO
+  19                                                        WITH DUPLICATES.
+  20        *
+  21        *-----------------------------------------------------------------
+  22         DATA DIVISION.
+  23         FILE SECTION.
+  24         FD CLIENTE
+  25                 LABEL RECORD IS STANDARD
+  26                 VALUE OF FILE-ID IS "CLIENTE.DAT".
+  27         01 REGCLI.
+  28                  03 CHAVE1.
+  29                     05 CODIGO          PIC 9(05).
+  30                  03 NOME                PIC X(30).
+  31                  03 ENDERECO        PIC X(30).
+  32                  03 TELEFONE          PIC 9(12).
+  33        *
+  34        *-----------------------------------------------------------------
+  35         WORKING-STORAGE SECTION.
+  36         77 W-SEL        PIC 9(01) VALUE ZEROS.
+  37         77 W-CONT       PIC 9(06) VALUE ZEROS.
+  38         77 W-OPCAO      PIC X(01) VALUE SPACES.
+  39         77 ST-ERRO      PIC X(02) VALUE "00".
+  40         77 W-ACT        PIC 9(02) VALUE ZEROS.
+  41         77 MENS         PIC X(50) VALUE SPACES.
+  42         77 LIMPA        PIC X(50) VALUE SPACES.
+  43        *-----------------------------------------------------------------
+  44         PROCEDURE DIVISION.
+  45         INICIO.
+  46        *
+  47         INC-OP0.
+  48             OPEN I-O CLIENTE
+  49             IF ST-ERRO NOT = "00"
+  50                 IF ST-ERRO = "30"
+  51                        OPEN OUTPUT CLIENTE
+  52                        CLOSE CLIENTE
+  53                        MOVE "*** ARQUIVO CLIENTE SENDO CRIADO **" TO MENS
+  54                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+  55                        GO TO INC-OP0
+  56                     ELSE
+  57                        MOVE "ERRO NA ABERTURA DO ARQUIVO CLIENTE" TO MENS
+
+ CADCLIEN.COB                            Thu May 21 15:56:48 2015    Page   2
+ line number source line   Microsoft COBOL                       Version 2.20
+
+  58                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+  59                        GO TO ROT-FIM
+  60                  ELSE
+  61                      NEXT SENTENCE.
+  62         INC-001.
+  63                  MOVE ZEROS  TO CODIGO  TELEFONE
+  64                  MOVE SPACES TO NOME ENDERECO.
+  65                  DISPLAY (01, 01) ERASE
+  66                  DISPLAY  (01, 20) "CADASTRO DE CLIENTES"
+  67                  DISPLAY  (04, 01) "CODIGO      : "
+  68                  DISPLAY  (05, 01) "NOME         : "
+  69                  DISPLAY  (06, 01) "ENDERECO : "
+  70                  DISPLAY  (07, 01) "TELEFONE  : " .
+  71         INC-002.
+  72                  ACCEPT  (04, 12) CODIGO
+  73                  ACCEPT W-ACT FROM ESCAPE KEY
+  74                   IF W-ACT = 02
+  75                     CLOSE CLIENTE
+  76                     GO TO ROT-FIM.
+  77                  IF CODIGO  = 0
+  78                     MOVE "*** CLIENTE  INVALIDO ***" TO MENS
+  79                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+  80                     GO TO INC-001.
+  81         LER-CLIENTE01.
+  82                  MOVE 0 TO W-SEL
+  83                  READ CLIENTE
+  84                  IF ST-ERRO NOT = "23"
+  85                     IF ST-ERRO = "00"
+  86                        DISPLAY (05, 12) NOME
+  87                        DISPLAY (06, 12) ENDERECO
+  88                        DISPLAY (07, 12) TELEFONE
+  89                        MOVE "*** CLIENTE JA CADASTRAD0 ***" TO MENS
+  90                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+  91                        MOVE 1 TO W-SEL
+  92                        GO TO ACE-001
+  93                     ELSE
+  94                        MOVE "ERRO NA LEITURA ARQUIVO CLIENTE"   TO MENS
+  95                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+  96                        GO TO ROT-FIM
+  97                  ELSE
+  98                     NEXT SENTENCE.
+  99         INC-003.
+ 100                  ACCEPT (05, 12) NOME
+ 101                  ACCEPT W-ACT FROM ESCAPE KEY
+ 102                  IF W-ACT = 02 GO TO INC-002.
+ 103         INC-004.
+ 104                  ACCEPT (06, 12) ENDERECO
+ 105                  ACCEPT W-ACT FROM ESCAPE KEY
+ 106                  IF W-ACT = 02 GO TO INC-003.
+ 107         INC-005.
+ 108                  ACCEPT (07, 12) TELEFONE
+ 109                  ACCEPT W-ACT FROM ESCAPE KEY
+ 110                  IF W-ACT = 02 GO TO INC-004.
+ 111        *
+ 112                  IF W-SEL = 1
+ 113                                GO TO ALT-OPC.
+ 114         INC-OPC.
+
+ CADCLIEN.COB                            Thu May 21 15:56:48 2015    Page   3
+ line number source line   Microsoft COBOL                       Version 2.20
+
+ 115                  MOVE "S" TO W-OPCAO
+ 116                  DISPLAY (23, 40) "DADOS OK (S/N) : ".
+ 117                  ACCEPT (23, 57) W-OPCAO WITH UPDATE
+ 118                  ACCEPT W-ACT FROM ESCAPE KEY
+ 119                  IF W-ACT = 02 GO TO INC-005.
+ 120                  IF W-OPCAO = "N" OR "n"
+ 121                     MOVE "*** DADOS RECUSADOS PELO OPERADOR ***" TO MENS
+ 122                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 123                     GO TO INC-001.
+ 124                  IF W-OPCAO NOT = "S" AND "s"
+ 125                     MOVE "*** DIGITE APENAS S=SIM e N=NAO ***" TO MENS
+ 126                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 127                     GO TO INC-OPC.
+ 128         INC-WR1.
+ 129                  WRITE REGCLI
+ 130                  IF ST-ERRO = "00" OR "02"
+ 131                        MOVE "*** DADOS GRAVADOS *** " TO MENS
+ 132                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 133                        GO TO INC-001.
+ 134                  IF ST-ERRO = "22"
+ 135                        MOVE "*** CLIENTE JA EXISTE ***       " TO MENS
+ 136                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 137                        GO TO INC-001
+ 138                  ELSE
+ 139                        MOVE "ERRO NA GRAVACAO DO ARQUIVO DE CLIENTE"
+ 140                                                         TO MENS
+ 141                        PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 142                        GO TO ROT-FIM.
+ 143        *
+ 144        *****************************************
+ 145        * ROTINA DE CONSULTA/ALTERACAO/EXCLUSAO *
+ 146        *****************************************
+ 147        *
+ 148         ACE-001.
+ 149                  DISPLAY (23, 12)
+ 150                       "F1=NOVO REGISTRO   F2=ALTERAR   F3=EXCLUIR"
+ 151                  ACCEPT (23, 55) W-OPCAO
+ 152                  ACCEPT W-ACT FROM ESCAPE KEY
+ 153                  IF W-ACT NOT = 02 AND W-ACT NOT = 03 AND W-ACT NOT = 04
+ 154                     GO TO ACE-001.
+ 155                  MOVE SPACES TO MENS
+ 156                  DISPLAY (23, 12) MENS
+ 157                  IF W-ACT = 02
+ 158                     MOVE 02 TO W-SEL
+ 159                     GO TO INC-001.
+ 160                  IF W-ACT = 03
+ 161                     GO TO INC-003.
+ 162        *
+ 163         EXC-OPC.
+ 164                  DISPLAY (23, 40) "EXCLUIR   (S/N) : ".
+ 165                  ACCEPT (23, 57) W-OPCAO
+ 166                  IF W-OPCAO = "N" OR "n"
+ 167                     MOVE "*** REGISTRO NAO EXCLUIDO ***" TO MENS
+ 168                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 169                     GO TO INC-001.
+ 170                  IF W-OPCAO NOT = "S" AND "s"
+ 171                     MOVE "*** DIGITE APENAS S=SIM  e  N=NAO ***" TO MENS
+
+ CADCLIEN.COB                            Thu May 21 15:56:48 2015    Page   4
+ line number source line   Microsoft COBOL                       Version 2.20
+
+ 172                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 173                     GO TO EXC-OPC.
+ 174         EXC-DL1.
+ 175                  DELETE CLIENTE RECORD
+ 176                  IF ST-ERRO = "00"
+ 177                     MOVE "*** REGISTRO EXCLUIDO ***           " TO MENS
+ 178                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 179                     GO TO INC-001.
+ 180                  MOVE "ERRO NA EXCLUSAO DO REGISTRO "   TO MENS
+ 181                  PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 182                  GO TO ROT-FIM.
+ 183        *
+ 184         ALT-OPC.
+ 185                  DISPLAY (23, 40) "ALTERAR  (S/N) : ".
+ 186                  ACCEPT (23, 57) W-OPCAO
+ 187                  ACCEPT W-ACT FROM ESCAPE KEY
+ 188                  IF W-ACT = 02 GO TO INC-005.
+ 189                  IF W-OPCAO = "N" OR "n"
+ 190                     MOVE "*** INFORMACOES NAO ALTERADAS *** " TO MENS
+ 191                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 192                     GO TO INC-001.
+ 193                  IF W-OPCAO NOT = "S" AND "s"
+ 194                     MOVE "*** DIGITE APENAS S=SIM  e  N=NAO ***" TO MENS
+ 195                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 196                     GO TO ALT-OPC.
+ 197         ALT-RW1.
+ 198                  REWRITE REGCLI
+ 199                  IF ST-ERRO = "00" OR "02"
+ 200                     MOVE "*** REGISTRO ALTERADO ***         " TO MENS
+ 201                     PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 202                     GO TO INC-001.
+ 203                  MOVE "ERRO NA EXCLUSAO DO REGISTRO CLIENTE"   TO MENS
+ 204                  PERFORM ROT-MENS THRU ROT-MENS-FIM
+ 205                  GO TO ROT-FIM.
+ 206        *
+ 207        **********************
+ 208        * ROTINA DE FIM      *
+ 209        **********************
+ 210        *
+ 211         ROT-FIM.
+ 212                  DISPLAY (01, 01) ERASE
+ 213                  EXIT PROGRAM.
+ 214         ROT-FIMP.
+ 215                  EXIT PROGRAM.
+ 216    
+ 217         ROT-FIMS.
+ 218                  STOP RUN.
+ 219        *
+ 220        **********************
+ 221        * ROTINA DE MENSAGEM *
+ 222        **********************
+ 223        *
+ 224         ROT-MENS.
+ 225                  MOVE ZEROS TO W-CONT.
+ 226         ROT-MENS1.
+ 227                 DISPLAY (23, 12) MENS.
+ 228         ROT-MENS2.
+
+ CADCLIEN.COB                            Thu May 21 15:56:48 2015    Page   5
+ line number source line   Microsoft COBOL                       Version 2.20
+
+ 229                  ADD 1 TO W-CONT
+ 230                  IF W-CONT < 30000
+ 231                     GO TO ROT-MENS2
+ 232                  ELSE
+ 233                     DISPLAY (23, 12) LIMPA.
+ 234         ROT-MENS-FIM.
+ 235                  EXIT.
+ 236         FIM-ROT-TEMPO.
+
+   No errors or warnings
+
+   Data area size =  1694
+   Code area size =  1754
+
